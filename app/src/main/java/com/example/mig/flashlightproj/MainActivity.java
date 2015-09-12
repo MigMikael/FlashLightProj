@@ -4,8 +4,10 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
+import android.provider.Settings;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -18,6 +20,8 @@ public class MainActivity extends ActionBarActivity {
     Button switchButton;
     private boolean isFlashlightOn;
     Camera.Parameters params;
+    int currentBrightness;
+    int maxBrightness = 255;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,7 +34,21 @@ public class MainActivity extends ActionBarActivity {
         boolean isCameraFlash = getApplicationContext().getPackageManager()
                 .hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH);
 
+        try{
+            Settings.System.putInt(getContentResolver(),
+                    Settings.System.SCREEN_BRIGHTNESS_MODE,Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL);
+
+            currentBrightness = Settings.System.getInt(getContentResolver(),
+                    Settings.System.SCREEN_BRIGHTNESS);
+
+        }catch (Settings.SettingNotFoundException e){
+            Log.e("Error","Cannot access system brightness");
+            e.printStackTrace();
+        }
+
         if (!isCameraFlash) {
+            Settings.System.putInt(getContentResolver(),
+                    Settings.System.SCREEN_BRIGHTNESS,maxBrightness);
             showNoCameraAlert();
         } else {
             camera = Camera.open();
@@ -54,6 +72,8 @@ public class MainActivity extends ActionBarActivity {
                 .setMessage("Camera flashlight not available in this Android device!")
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
+                        Settings.System.putInt(getContentResolver(),
+                                Settings.System.SCREEN_BRIGHTNESS,currentBrightness);
                         finish(); // close the Android app
                     }
                 })
